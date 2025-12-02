@@ -55,6 +55,17 @@ class ConsultaController {
       const urlOlx = olxService.gerarUrlOlx(veiculoData);
       if (urlOlx) {
         veiculoData.urlOlx = urlOlx;
+        
+        // Busca preços no OLX (não bloqueia se falhar)
+        try {
+          const precosOlx = await olxService.buscarPrecosOlx(veiculoData);
+          if (precosOlx) {
+            veiculoData.precosOlx = precosOlx;
+          }
+        } catch (error) {
+          console.warn('Aviso: Não foi possível buscar preços no OLX:', error.message);
+          // Continua mesmo sem preços
+        }
       }
 
       res.json({
@@ -98,6 +109,17 @@ class ConsultaController {
       const urlOlx = olxService.gerarUrlOlx(veiculoData);
       if (urlOlx) {
         veiculoData.urlOlx = urlOlx;
+        
+        // Busca preços no OLX (não bloqueia se falhar)
+        try {
+          const precosOlx = await olxService.buscarPrecosOlx(veiculoData);
+          if (precosOlx) {
+            veiculoData.precosOlx = precosOlx;
+          }
+        } catch (error) {
+          console.warn('Aviso: Não foi possível buscar preços no OLX:', error.message);
+          // Continua mesmo sem preços
+        }
       }
 
       res.json({
