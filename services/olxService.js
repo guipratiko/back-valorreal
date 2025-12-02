@@ -66,9 +66,13 @@ class OlxService {
         return null;
       }
 
-      // Faz requisição para a página do OLX
+      // Faz requisição para a página do OLX com timeout reduzido
       const response = await axios.get(urlOlx, {
-        timeout: 15000,
+        timeout: 8000, // Reduzido para 8 segundos
+        maxRedirects: 5,
+        validateStatus: function (status) {
+          return status >= 200 && status < 400; // Aceita redirects
+        },
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -104,11 +108,13 @@ class OlxService {
         });
       }
 
-      // Se ainda não encontrou, tenta buscar em elementos com "R$"
+      // Se ainda não encontrou, tenta buscar em elementos com "R$" (limitado para não travar)
       if (precos.length === 0) {
+        let count = 0;
         $('*').each((i, element) => {
+          if (count++ > 500) return false; // Limita a 500 elementos para não travar
           const texto = $(element).text();
-          if (texto.includes('R$')) {
+          if (texto && texto.includes('R$') && texto.length < 100) { // Limita tamanho do texto
             const preco = this.extrairPreco(texto);
             if (preco && preco > 1000 && preco < 10000000) { // Filtra valores razoáveis
               precos.push(preco);
@@ -137,7 +143,10 @@ class OlxService {
         urlOlx: urlOlx
       };
     } catch (error) {
-      console.error('Erro ao buscar preços no OLX:', error.message);
+      // Log mais detalhado apenas em desenvolvimento
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erro ao buscar preços no OLX:', error.message);
+      }
       return null;
     }
   }

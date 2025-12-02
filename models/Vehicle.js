@@ -64,6 +64,10 @@ const VehicleSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: null
   },
+  precosOlx: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   mensagemRetorno: {
     type: String,
     default: null

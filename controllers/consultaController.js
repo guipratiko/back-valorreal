@@ -55,24 +55,39 @@ class ConsultaController {
       const urlOlx = olxService.gerarUrlOlx(veiculoData);
       if (urlOlx) {
         veiculoData.urlOlx = urlOlx;
-        
-        // Busca preços no OLX (não bloqueia se falhar)
-        try {
-          const precosOlx = await olxService.buscarPrecosOlx(veiculoData);
-          if (precosOlx) {
-            veiculoData.precosOlx = precosOlx;
-          }
-        } catch (error) {
-          console.warn('Aviso: Não foi possível buscar preços no OLX:', error.message);
-          // Continua mesmo sem preços
-        }
       }
 
+      // Responde imediatamente sem esperar pelos preços do OLX
       res.json({
         success: true,
         data: veiculoData,
         timestamp: new Date().toISOString()
       });
+
+      // Busca preços no OLX de forma assíncrona (não bloqueia a resposta)
+      if (urlOlx) {
+        olxService.buscarPrecosOlx(veiculoData)
+          .then(precosOlx => {
+            if (precosOlx) {
+              // Atualiza no banco de dados para próxima consulta
+              Vehicle.findOneAndUpdate(
+                { placa: veiculoData.placa },
+                { precosOlx: precosOlx },
+                { new: true }
+              ).catch(err => {
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn('Não foi possível salvar preços do OLX:', err.message);
+                }
+              });
+            }
+          })
+          .catch(error => {
+            // Silenciosamente ignora erros de scraping
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Aviso: Não foi possível buscar preços no OLX:', error.message);
+            }
+          });
+      }
     } catch (error) {
       next(error);
     }
@@ -109,24 +124,37 @@ class ConsultaController {
       const urlOlx = olxService.gerarUrlOlx(veiculoData);
       if (urlOlx) {
         veiculoData.urlOlx = urlOlx;
-        
-        // Busca preços no OLX (não bloqueia se falhar)
-        try {
-          const precosOlx = await olxService.buscarPrecosOlx(veiculoData);
-          if (precosOlx) {
-            veiculoData.precosOlx = precosOlx;
-          }
-        } catch (error) {
-          console.warn('Aviso: Não foi possível buscar preços no OLX:', error.message);
-          // Continua mesmo sem preços
-        }
       }
 
+      // Responde imediatamente sem esperar pelos preços do OLX
       res.json({
         success: true,
         data: veiculoData,
         timestamp: new Date().toISOString()
       });
+
+      // Busca preços no OLX de forma assíncrona (não bloqueia a resposta)
+      if (urlOlx) {
+        olxService.buscarPrecosOlx(veiculoData)
+          .then(precosOlx => {
+            if (precosOlx) {
+              // Atualiza no banco de dados para próxima consulta
+              Vehicle.findOneAndUpdate(
+                { placa: veiculoData.placa },
+                { precosOlx: precosOlx },
+                { new: true }
+              ).catch(err => {
+                console.warn('Não foi possível salvar preços do OLX:', err.message);
+              });
+            }
+          })
+          .catch(error => {
+            // Silenciosamente ignora erros de scraping
+            if (process.env.NODE_ENV === 'development') {
+              console.warn('Aviso: Não foi possível buscar preços no OLX:', error.message);
+            }
+          });
+      }
     } catch (error) {
       next(error);
     }
