@@ -1,5 +1,6 @@
 const Vehicle = require('../models/Vehicle');
 const apiPlacasService = require('../services/apiPlacasService');
+const olxService = require('../services/olxService');
 
 class ConsultaController {
   /**
@@ -50,6 +51,12 @@ class ConsultaController {
         }
       }
 
+      // Adiciona URL do OLX se houver dados suficientes
+      const urlOlx = olxService.gerarUrlOlx(veiculoData);
+      if (urlOlx) {
+        veiculoData.urlOlx = urlOlx;
+      }
+
       res.json({
         success: true,
         data: veiculoData,
@@ -85,6 +92,12 @@ class ConsultaController {
       } catch (dbError) {
         console.warn('Aviso: Não foi possível salvar no MongoDB:', dbError.message);
         // Continua mesmo sem salvar
+      }
+
+      // Adiciona URL do OLX se houver dados suficientes
+      const urlOlx = olxService.gerarUrlOlx(veiculoData);
+      if (urlOlx) {
+        veiculoData.urlOlx = urlOlx;
       }
 
       res.json({
